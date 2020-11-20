@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30503.244
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bndr-graphics", "bndr-graphics.vcxproj", "{8AA75259-734A-497B-B11A-6D8BE2F243AE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8AA75259-734A-497B-B11A-6D8BE2F243AE}.Debug|x64.ActiveCfg = Debug|x64
+		{8AA75259-734A-497B-B11A-6D8BE2F243AE}.Debug|x64.Build.0 = Debug|x64
+		{8AA75259-734A-497B-B11A-6D8BE2F243AE}.Debug|x86.ActiveCfg = Debug|Win32
+		{8AA75259-734A-497B-B11A-6D8BE2F243AE}.Debug|x86.Build.0 = Debug|Win32
+		{8AA75259-734A-497B-B11A-6D8BE2F243AE}.Release|x64.ActiveCfg = Release|x64
+		{8AA75259-734A-497B-B11A-6D8BE2F243AE}.Release|x64.Build.0 = Release|x64
+		{8AA75259-734A-497B-B11A-6D8BE2F243AE}.Release|x86.ActiveCfg = Release|Win32
+		{8AA75259-734A-497B-B11A-6D8BE2F243AE}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {67698C96-328F-4541-8D7B-953B9756C42A}
+	EndGlobalSection
+EndGlobal
