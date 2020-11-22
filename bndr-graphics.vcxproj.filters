@@ -27,4 +27,8 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\default_frag.glsl" />
+    <None Include="shaders\default_vert.glsl" />
+  </ItemGroup>
 </Project>

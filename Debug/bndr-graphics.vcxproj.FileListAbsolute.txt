@@ -1,2 +1,4 @@
 D:\C++ Projects\bndr-graphics\Debug\bndr-graphics.exe
 D:\C++ Projects\bndr-graphics\Debug\bndr-graphics.pdb
+D:\C++ Projects\bndr-graphics-lib\Debug\bndr-graphics.exe
+D:\C++ Projects\bndr-graphics-lib\Debug\bndr-graphics.pdb
