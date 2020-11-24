@@ -146,6 +146,47 @@ namespace bndr {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[1]);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesSize * sizeof(uint), &indices[0], GL_DYNAMIC_DRAW);
 
+		// since the user never specified an image the texture pointer is null
+		texture = nullptr;
+
+		// unbind the vertex array
+		Unbind();
+	}
+
+	VertexArray::VertexArray(std::vector<float> vertices, std::vector<uint> indices, const char* bmpFile, const std::vector<std::pair<uint, uint>>& paramPairs) {
+
+		// create the vao
+		glGenVertexArrays(1, &vao);
+		// bind it
+		Bind();
+
+		// create and define array buffer data
+		glGenBuffers(1, &vbo[0]);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_DYNAMIC_DRAW);
+
+		// position attrib pointer
+		glEnableVertexAttribArray(0);
+		// stride is (3 + 3 + 2) * 4 = 8 * 4 = 32 
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), NULL);
+
+		// color attrib pointer
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+
+		// texture coords attrib pointer
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+
+		indicesSize = indices.size();
+		// create and define element array buffer
+		glGenBuffers(1, &vbo[1]);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[1]);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesSize * sizeof(uint), &indices[0], GL_DYNAMIC_DRAW);
+
+		// create the texture
+		texture = new Texture(bmpFile, paramPairs);
+
 		// unbind the vertex array
 		Unbind();
 	}
