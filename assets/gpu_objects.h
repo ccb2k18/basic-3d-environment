@@ -82,7 +82,6 @@ namespace bndr {
 			if (imageSize == 0) { imageSize = width * height * 3; } // 3 : one byte for each Red, Green and Blue component
 			if (dataPos == 0) { dataPos = 54; } // The BMP header is done that way
 			uchar* imgBytes = new uchar[imageSize];
-			std::cout << imageSize << "\n";
 			// Read the actual data from the file into the buffer
 			fread(imgBytes, 1, imageSize, imgBuffer);
 
@@ -94,6 +93,9 @@ namespace bndr {
 	public:
 
 		Texture(const char* bmpFile, const std::vector<std::pair<uint, uint>>& paramPairs);
+		inline void Bind() { glBindTexture(GL_TEXTURE_2D, textureID); }
+		inline void Unbind() { glBindTexture(GL_TEXTURE_2D, 0); }
+		~Texture();
 	};
 
 	// object for containing a vertex array object as well as vertex buffer data
@@ -117,8 +119,8 @@ namespace bndr {
 		// update the buffer data with new vertices and indices
 		void UpdateBufferData(std::vector<float> vertices, std::vector<uint> indices);
 		// load a texture to use with the vao (make sure the vertices specify color coords and texture coords)
-		inline void Bind() { glBindVertexArray(vao); }
-		inline void Unbind() { glBindVertexArray(0); }
+		inline void Bind() { glBindVertexArray(vao); if (texture != nullptr) { texture->Bind(); } }
+		inline void Unbind() { if (texture != nullptr) { texture->Unbind(); } glBindVertexArray(0); }
 		void Render();
 		~VertexArray();
 	};
@@ -160,18 +162,29 @@ namespace bndr {
 
 			return Program({ {"shaders/default_vert.glsl", bndr::VERT_SHDR}, {"shaders/default_frag.glsl", bndr::FRAG_SHDR} });
 		}
-		// returns a shader program for textured objects
-		static Program Textured() {
+		// returns a shader program for textured objects (no additional color other than texture)
+		static Program TexturedNoColor() {
 
 			return Program({ {"shaders/texture_vert.glsl", bndr::VERT_SHDR}, {"shaders/texture_frag.glsl", bndr::FRAG_SHDR} });
 		}
+		// returns a shader program for textured objects
+		static Program TexturedColor() {
+
+			return Program({ {"shaders/texture_vert.glsl", bndr::VERT_SHDR}, {"shaders/texture_clr_frag.glsl", bndr::FRAG_SHDR} });
+		}
 	};
 
+	// mesh that contains vertices, color, texture, and can load it all from a blender object file
 	class Mesh {
 
-
+		VertexArray* vao;
+		Program* program;
 
 	public:
+
+		// if the model is texured, we will load it differently
+		Mesh(const char* objFile, bool textured);
+		~Mesh();
 	};
 }
 

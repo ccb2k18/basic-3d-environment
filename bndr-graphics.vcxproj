@@ -160,6 +160,7 @@
   <ItemGroup>
     <None Include="shaders\default_frag.glsl" />
     <None Include="shaders\default_vert.glsl" />
+    <None Include="shaders\texture_clr_frag.glsl" />
     <None Include="shaders\texture_frag.glsl" />
     <None Include="shaders\texture_vert.glsl" />
   </ItemGroup>

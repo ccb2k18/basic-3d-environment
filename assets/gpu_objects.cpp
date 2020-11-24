@@ -113,13 +113,19 @@ namespace bndr {
 		uint height = imgByteData.second.second;
 
 		// define the texture image and generate the mipmap
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 		// deallocate memory
 		delete[] data;
 
-		// unbind texture
-		// glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	Texture::~Texture() {
+
+		// take care of opengl texture
+		glDeleteTextures(1, &textureID);
+
+
 	}
 
 	// bndr::VertexArray method definitions
@@ -334,5 +340,18 @@ namespace bndr {
 			break;
 		}
 		Unuse();
+	}
+
+	// bndr::Mesh method definitions
+
+	Mesh::Mesh(const char* objFile, bool textured) {
+
+
+	}
+
+	Mesh::~Mesh() {
+
+		delete vao;
+		delete program;
 	}
 }
