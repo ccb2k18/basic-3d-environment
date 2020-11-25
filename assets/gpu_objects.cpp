@@ -129,10 +129,10 @@ namespace bndr {
 
 	// bndr::VertexArray method definitions
 
-	VertexArray::VertexArray(std::vector<float> vertices, std::vector<uint> indices, uint numTextures) {
+	VertexArray::VertexArray(std::vector<float> vertices, std::vector<uint> indices, bool usingTextures) {
 
 		int stride = 7 * sizeof(float);
-		if (numTextures > 0) {
+		if (usingTextures) {
 
 			stride = 10 * sizeof(float);
 		}
@@ -156,7 +156,7 @@ namespace bndr {
 
 		// make sure a texture is bound otherwise you will get errors
 		// make sure the appropriate program is also used
-		if (numTextures > 0) {
+		if (usingTextures) {
 
 			// texture uv coords attrib pointer
 			glEnableVertexAttribArray(2);
@@ -315,6 +315,14 @@ namespace bndr {
 		default:
 			break;
 		}
+		Unuse();
+	}
+
+	void Program::SetUniformValue(const char* uniformName, int* dataBegin, uint size) {
+
+		Use();
+		int location = glGetUniformLocation(program, uniformName);
+		glUniform1iv(location, size, dataBegin);
 		Unuse();
 	}
 

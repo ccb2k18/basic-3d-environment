@@ -96,6 +96,9 @@ namespace bndr {
 		Texture(const char* bmpFile, const std::vector<std::pair<uint, uint>>& paramPairs);
 		inline void Bind() { glBindTexture(GL_TEXTURE_2D, textureID); }
 		inline void Unbind() { glBindTexture(GL_TEXTURE_2D, 0); }
+		// get the texture opengl id
+		inline uint GetID() { return textureID; }
+		inline void BindUnit(uint index) { glBindTextureUnit(index, textureID); }
 		~Texture();
 	};
 
@@ -115,7 +118,7 @@ namespace bndr {
 		// x y z r g b a u v i = 3 pos floats + 4 color floats + 2 texture floats + 1 texture index =
 		// (3+4+2+1)*sizeof(float) = 10 * sizeof(float)
 		// otherwise if numTextures = 0 then stride is just 7 * sizeof(float) (x y z r g b a)
-		VertexArray(std::vector<float> vertices, std::vector<uint> indices, uint numTextures = 0);
+		VertexArray(std::vector<float> vertices, std::vector<uint> indices, bool usingTextures = false);
 		// update the buffer data with new vertices and indices
 		void UpdateBufferData(std::vector<float> vertices, std::vector<uint> indices);
 		// load a texture to use with the vao (make sure the vertices specify color coords and texture coords)
@@ -158,6 +161,9 @@ namespace bndr {
 		inline void Use() { glUseProgram(program); }
 		inline void Unuse() { glUseProgram(0); }
 		void SetUniformValue(const char* uniformName, float* dataBegin, uint dataTypeEnum);
+		// for setting integer values
+		void SetUniformValue(const char* uniformName, int* dataBegin, uint size);
+		inline int GetUniformLocation(const char* uniformName) { return glGetUniformLocation(program, uniformName); }
 		// returns a basic shader that colors a shape one color
 		static Program Default() {
 
