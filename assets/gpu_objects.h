@@ -50,9 +50,10 @@ namespace bndr {
 
 	};
 
-	// class for abstracting gl textures away (meant to be used inside a vertex array class)
-	// a vao has to be bound in order to use which is why you should just use it inside a vao class
+	// class for abstracting gl textures away
 	// assumes a 2d texture file
+	// if you set the vertex array constructor argument "numTextures" to greater than 0
+	// the stride will be 40 as opposed to 28
 	class Texture {
 
 		uint textureID;
@@ -107,20 +108,19 @@ namespace bndr {
 		uint vbo[2];
 		// indices size
 		uint indicesSize;
-		// texture is allocated on the heap
-		Texture* texture;
 
 	public:
 
-		// vertex array for mesh without texture
-		VertexArray(std::vector<float> vertices, std::vector<uint> indices);
-		// vertex array for mesh with texture (for vertices expecting 3 floats for pos, 3 floats for color, and 2 floats for texture coords per point)
-		VertexArray(std::vector<float> vertices, std::vector<uint> indices, const char* bmpFile, const std::vector<std::pair<uint, uint>>& paramPairs);
+		// vertex array (numtextures by default is zero) if numTextures > 0 then the stride will be:
+		// x y z r g b a u v i = 3 pos floats + 4 color floats + 2 texture floats + 1 texture index =
+		// (3+4+2+1)*sizeof(float) = 10 * sizeof(float)
+		// otherwise if numTextures = 0 then stride is just 7 * sizeof(float) (x y z r g b a)
+		VertexArray(std::vector<float> vertices, std::vector<uint> indices, uint numTextures = 0);
 		// update the buffer data with new vertices and indices
 		void UpdateBufferData(std::vector<float> vertices, std::vector<uint> indices);
 		// load a texture to use with the vao (make sure the vertices specify color coords and texture coords)
-		inline void Bind() { glBindVertexArray(vao); if (texture != nullptr) { texture->Bind(); } }
-		inline void Unbind() { if (texture != nullptr) { texture->Unbind(); } glBindVertexArray(0); }
+		inline void Bind() { glBindVertexArray(vao); }
+		inline void Unbind() { glBindVertexArray(0); }
 		void Render();
 		~VertexArray();
 	};
@@ -134,6 +134,7 @@ namespace bndr {
 
 	enum uniformDataTypes {
 
+		FLOAT = 1,
 		VEC2 = 2,
 		VEC3 = 3,
 		VEC4 = 4,
@@ -160,17 +161,25 @@ namespace bndr {
 		// returns a basic shader that colors a shape one color
 		static Program Default() {
 
-			return Program({ {"shaders/default_vert.glsl", bndr::VERT_SHDR}, {"shaders/default_frag.glsl", bndr::FRAG_SHDR} });
+			return Program({ {"shaders/default_shdr/default_vert.glsl", bndr::VERT_SHDR}, {"shaders/default_shdr/default_frag.glsl", bndr::FRAG_SHDR} });
 		}
-		// returns a shader program for textured objects (no additional color other than texture)
-		static Program TexturedNoColor() {
+		// returns a shader program for textured objects (pass in number of textures to load (it shall not exceed 6))
+		static Program Textured(uint numTextures) {
 
-			return Program({ {"shaders/texture_vert.glsl", bndr::VERT_SHDR}, {"shaders/texture_frag.glsl", bndr::FRAG_SHDR} });
-		}
-		// returns a shader program for textured objects
-		static Program TexturedColor() {
+			if (numTextures == 0 || numTextures == 1) {
 
-			return Program({ {"shaders/texture_vert.glsl", bndr::VERT_SHDR}, {"shaders/texture_clr_frag.glsl", bndr::FRAG_SHDR} });
+				return Program({ {"shaders/texture_shdr/texture_vert.glsl", bndr::VERT_SHDR}, {"shaders/texture_shdr/texture_frag.glsl", bndr::FRAG_SHDR} });
+			}
+			else if (numTextures > 1 && numTextures < 7) {
+
+				std::string texFrag = "shaders/texture_shdr/textures" + std::to_string(numTextures) + "_frag.glsl";
+				const char* texFragCStr = texFrag.c_str();
+				return Program({ {"shaders/texture_shdr/texture_vert.glsl", bndr::VERT_SHDR}, {texFragCStr, bndr::FRAG_SHDR} });
+			}
+			else {
+
+				throw std::exception("The maximum number of textures per fragment shader is 6\n");
+			}
 		}
 	};
 
@@ -179,11 +188,12 @@ namespace bndr {
 
 		VertexArray* vao;
 		Program* program;
+		// textures to store
+		std::vector<Texture> textures;
 
 	public:
 
-		// if the model is texured, we will load it differently
-		Mesh(const char* objFile, bool textured);
+		Mesh(const char* objFile, std::vector<const char*> TexBMPFiles = {});
 		~Mesh();
 	};
 }

@@ -28,10 +28,14 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\default_frag.glsl" />
-    <None Include="shaders\default_vert.glsl" />
-    <None Include="shaders\texture_frag.glsl" />
-    <None Include="shaders\texture_vert.glsl" />
-    <None Include="shaders\texture_clr_frag.glsl" />
+    <None Include="shaders\default_shdr\default_frag.glsl" />
+    <None Include="shaders\default_shdr\default_vert.glsl" />
+    <None Include="shaders\texture_shdr\texture_vert.glsl" />
+    <None Include="shaders\texture_shdr\texture_frag.glsl" />
+    <None Include="shaders\texture_shdr\textures2_frag.glsl" />
+    <None Include="shaders\texture_shdr\textures3_frag.glsl" />
+    <None Include="shaders\texture_shdr\textures4_frag.glsl" />
+    <None Include="shaders\texture_shdr\textures5_frag.glsl" />
+    <None Include="shaders\texture_shdr\textures6_frag.glsl" />
   </ItemGroup>
 </Project>

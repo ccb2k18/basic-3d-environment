@@ -125,13 +125,17 @@ namespace bndr {
 		// take care of opengl texture
 		glDeleteTextures(1, &textureID);
 
-
 	}
 
 	// bndr::VertexArray method definitions
 
-	VertexArray::VertexArray(std::vector<float> vertices, std::vector<uint> indices) {
+	VertexArray::VertexArray(std::vector<float> vertices, std::vector<uint> indices, uint numTextures) {
 
+		int stride = 7 * sizeof(float);
+		if (numTextures > 0) {
+
+			stride = 10 * sizeof(float);
+		}
 		// create the vao
 		glGenVertexArrays(1, &vao);
 		// bind it
@@ -144,54 +148,30 @@ namespace bndr {
 
 		// position attrib pointer
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), NULL);
-
-		indicesSize = indices.size();
-		// create and define element array buffer
-		glGenBuffers(1, &vbo[1]);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[1]);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesSize * sizeof(uint), &indices[0], GL_DYNAMIC_DRAW);
-
-		// since the user never specified an image the texture pointer is null
-		texture = nullptr;
-
-		// unbind the vertex array
-		Unbind();
-	}
-
-	VertexArray::VertexArray(std::vector<float> vertices, std::vector<uint> indices, const char* bmpFile, const std::vector<std::pair<uint, uint>>& paramPairs) {
-
-		// create the vao
-		glGenVertexArrays(1, &vao);
-		// bind it
-		Bind();
-
-		// create and define array buffer data
-		glGenBuffers(1, &vbo[0]);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_DYNAMIC_DRAW);
-
-		// position attrib pointer
-		glEnableVertexAttribArray(0);
-		// stride is (3 + 3 + 2) * 4 = 8 * 4 = 32 
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), NULL);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, NULL);
 
 		// color attrib pointer
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, (const void*)(3 * sizeof(float)));
 
-		// texture coords attrib pointer
-		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+		// make sure a texture is bound otherwise you will get errors
+		// make sure the appropriate program is also used
+		if (numTextures > 0) {
+
+			// texture uv coords attrib pointer
+			glEnableVertexAttribArray(2);
+			glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (const void*)(7 * sizeof(float)));
+
+			// texture index attrib pointer
+			glEnableVertexAttribArray(3);
+			glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, stride, (const void*)(9 * sizeof(float)));
+		}
 
 		indicesSize = indices.size();
 		// create and define element array buffer
 		glGenBuffers(1, &vbo[1]);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[1]);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesSize * sizeof(uint), &indices[0], GL_DYNAMIC_DRAW);
-
-		// create the texture
-		texture = new Texture(bmpFile, paramPairs);
 
 		// unbind the vertex array
 		Unbind();
@@ -212,18 +192,11 @@ namespace bndr {
 
 	void VertexArray::Render() {
 
-		Bind();
 		glDrawElements(GL_TRIANGLES, indicesSize, GL_UNSIGNED_INT, NULL);
-		Unbind();
 	}
 
 	VertexArray::~VertexArray() {
 
-		// delete the texture if it exists
-		if (texture != nullptr) {
-
-			delete texture;
-		}
 	}
 
 	// bndr::Program method definitions
@@ -320,6 +293,9 @@ namespace bndr {
 		int location = glGetUniformLocation(program, uniformName);
 		switch (dataTypeEnum)
 		{
+		case 1:
+
+			glUniform1f(location, dataBegin[0]);
 		case 2:
 
 			glUniform2f(location, dataBegin[0], dataBegin[1]);
@@ -344,7 +320,7 @@ namespace bndr {
 
 	// bndr::Mesh method definitions
 
-	Mesh::Mesh(const char* objFile, bool textured) {
+	Mesh::Mesh(const char* objFile, std::vector<const char*> TexBMPFiles) {
 
 
 	}
