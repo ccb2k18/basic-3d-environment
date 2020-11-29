@@ -17,6 +17,7 @@ typedef unsigned int uint;
 typedef unsigned char uchar;
 
 std::ostream& operator<<(std::ostream& out, const glm::mat4x4& mat);
+std::ostream& operator<<(std::ostream& out, const std::vector<float>& vec);
 
 namespace bndr {
 
@@ -127,11 +128,10 @@ namespace bndr {
 
 	public:
 
-		// vertex array (numtextures by default is zero) if numTextures > 0 then the stride will be:
-		// x y z r g b a u v i = 3 pos floats + 4 color floats + 2 texture floats + 1 texture index =
-		// (3+4+2+1)*sizeof(float) = 10 * sizeof(float)
-		// otherwise if numTextures = 0 then stride is just 7 * sizeof(float) (x y z r g b a)
-		VertexArray(std::vector<float> vertices, std::vector<uint> indices, bool usingTextures = false);
+		// usingTextures and usingNormals is true: x y z r g b a nx ny nz u v i = stride of 13 * sizeof(float)
+		// only usingNormals is true: x y z r g b a nx ny nz = stride of 10 * sizeof(float)
+		// not using either: x y z r g b a = stride of 7 * sizeof(float)
+		VertexArray(std::vector<float> vertices, std::vector<uint> indices, bool usingNormals = false, bool usingTextures = false);
 		// update the buffer data with new vertices and indices
 		void UpdateBufferData(std::vector<float> vertices, std::vector<uint> indices);
 		// load a texture to use with the vao (make sure the vertices specify color coords and texture coords)
@@ -224,7 +224,7 @@ namespace bndr {
 		}
 	};
 
-	// mesh that contains vertices, color, and can load it all from a blender object file
+	// mesh that contains vertices, colors, normals, and can load it all from a blender object file
 	class Mesh {
 
 		VertexArray* vao;
@@ -255,43 +255,96 @@ namespace bndr {
 				throw std::runtime_error("Cannot open object file\n");
 			}
 
-			std::vector<float> vertices;
+			// 2D just refers to the dimensions of the vector and has nothing to do with the data itself
+			std::vector<std::vector<float>> vertices2D;
+			std::vector<std::vector<float>> normals2D;
 			std::vector<uint> indices;
 			std::string line;
+			// current position index to add positions to in vertices2D
+			int posIndex = 0;
+			// current normals index to add normals to in normals2D
+			int normalsIndex = 0;
 			while (std::getline(objStream, line)) {
 
-				// these are the position vertices
+				// these are the position vertices (they are always first)
 				if (line[0] == 'v' && line[1] == ' ') {
 
+					// add an empty vector to pack with data
+					vertices2D.push_back({});
 					// split up the data in each line
 					std::vector<std::string> splitLine = SplitStr(line, ' ');
 					// we skip the v so we set i to 1
 					for (int i = 1; i < splitLine.size(); i++) {
 
-						vertices.push_back(std::stof(splitLine[i]));
+						vertices2D[posIndex].push_back(std::stof(splitLine[i]));
 					}
 					// now add the default color if the object file doesn't specify it
 					if (!objectHasColors) {
 
 						for (float& fl : color) {
 
-							vertices.push_back(fl);
+							vertices2D[posIndex].push_back(fl);
 						}
 					}
+					// increment the current index
+					posIndex++;
 				}
-				// faces (indices to vertices)
+				// we are loading normal data
+				else if (line[0] == 'v' && line[1] == 'n') {
+
+					// add the empty vector to put the normals in
+					normals2D.push_back({});
+					std::vector<std::string> splitLine = SplitStr(line, ' ');
+					// skip 0 so we don't add vn
+					for (int i = 1; i < splitLine.size(); i++) {
+
+						normals2D[normalsIndex].push_back(std::stof(splitLine[i]));
+					}
+					// increment the normalsIndex
+					normalsIndex++;
+				}
+
+				// faces (indices to vertices and normals)
 				else if (line[0] == 'f' && line[1] == ' ') {
 
 					std::vector<std::string> splitLine = SplitStr(line, ' ');
-					// get the indices whilst skipping f
+					// splitLine has a pair of indices, one for the positions and one for the normals
+					// therefore we must use the normal index to add the appropriate normals to the vertices vector
 					for (int i = 1; i < splitLine.size(); i++) {
 
-						indices.push_back((uint)(std::stoi(splitLine[i])-1));
+						// split the element even further (i.e. "5/4" becomes {"5", "4"})
+						std::vector<std::string> pair = SplitStr(splitLine[i], '/');
+						int posI = (std::stoi(pair[0]) - 1);
+						int normI = (std::stoi(pair[1]) - 1);
+						// add pair[0] since it is the index to the position
+						indices.push_back((uint)(std::stoi(pair[0]) - 1));
+						// however do not add pair[1] to indices but instead use it to add the normals
+						// to the appropriate position vector in vertices2D
+						vertices2D[posI].push_back(normals2D[normI][0]);
+						vertices2D[posI].push_back(normals2D[normI][1]);
+						vertices2D[posI].push_back(normals2D[normI][2]);
+
 					}
 				}
 			}
 			// close the object file stream
 			objStream.close();
+			// now let's flatten vertices2D into vertices
+			std::vector<float> vertices;
+			for (const std::vector<float>& vec : vertices2D) {
+
+				std::cout << vec << "\n";
+				for (const float& fl : vec) {
+
+					vertices.push_back(fl);
+				}
+			}
+			std::cout << "\n\n\n";
+			for (int i = 0; i < indices.size()-3; i += 3) {
+
+				std::cout << indices[i] << " " << indices[i + 1] << " " << indices[i + 2] << "\n";
+			}
+
 			// return the pair
 			return {vertices, indices};
 

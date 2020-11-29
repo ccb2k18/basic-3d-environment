@@ -17,6 +17,15 @@ std::ostream& operator<<(std::ostream& out, const glm::mat4x4& mat) {
 	return out;
 }
 
+std::ostream& operator<<(std::ostream& out, const std::vector<float>& vec) {
+
+	for (const float& fl : vec) {
+
+		out << fl << " ";
+	}
+	return out;
+}
+
 namespace bndr {
 
 	// define the static screenSize
@@ -174,12 +183,17 @@ namespace bndr {
 
 	// bndr::VertexArray method definitions
 
-	VertexArray::VertexArray(std::vector<float> vertices, std::vector<uint> indices, bool usingTextures) {
+	VertexArray::VertexArray(std::vector<float> vertices, std::vector<uint> indices, bool usingNormals, bool usingTextures) {
 
 		int stride = 7 * sizeof(float);
-		if (usingTextures) {
+		// add to stride based on the extra parameters added
+		if (usingNormals) {
 
-			stride = 10 * sizeof(float);
+			stride += 3 * sizeof(float);
+		}
+		if (usingTextures) {
+		
+			stride += 3 * sizeof(float);
 		}
 		// create the vao
 		glGenVertexArrays(1, &vao);
@@ -199,17 +213,34 @@ namespace bndr {
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, (const void*)(3 * sizeof(float)));
 
-		// make sure a texture is bound otherwise you will get errors
+		// change the attribIndex and byte offset accordingly
+		// every vao will have position and color, but not every vao will have normals and texture coords
+		int attribIndex = 1;
+		int offset = 7;
+		if (usingNormals) {
+
+			attribIndex++;
+			glEnableVertexAttribArray(attribIndex);
+			glVertexAttribPointer(attribIndex, 3, GL_FLOAT, GL_FALSE, stride, (const void*)(offset * sizeof(float)));
+			// add to the offset in case there are textures too
+			offset += 3;
+
+		}
+
+		// make sure a texture is bound when you do the draw call otherwise you will get errors
 		// make sure the appropriate program is also used
 		if (usingTextures) {
 
+			attribIndex++;
 			// texture uv coords attrib pointer
-			glEnableVertexAttribArray(2);
-			glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (const void*)(7 * sizeof(float)));
+			glEnableVertexAttribArray(attribIndex);
+			glVertexAttribPointer(attribIndex, 2, GL_FLOAT, GL_FALSE, stride, (const void*)(offset * sizeof(float)));
 
+			attribIndex++;
+			offset += 2;
 			// texture index attrib pointer
-			glEnableVertexAttribArray(3);
-			glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, stride, (const void*)(9 * sizeof(float)));
+			glEnableVertexAttribArray(attribIndex);
+			glVertexAttribPointer(attribIndex, 1, GL_FLOAT, GL_FALSE, stride, (const void*)(offset * sizeof(float)));
 		}
 
 		indicesSize = indices.size();
@@ -278,12 +309,12 @@ namespace bndr {
 		}
 		// link all the shaders together
 		LinkProgram(ids);
-		for (std::unordered_map<const char*, uint>::iterator p = Program::loadedPrograms.begin(); p != Program::loadedPrograms.end(); p++) {
+		/*for (std::unordered_map<const char*, uint>::iterator p = Program::loadedPrograms.begin(); p != Program::loadedPrograms.end(); p++) {
 
 			std::pair<const char*, uint> kv = *p;
 			std::cout << "image File: " << kv.first << "\tid: " << kv.second << "\n";
 		}
-		std::cout << "\n\n\n";
+		std::cout << "\n\n\n";*/
 
 	}
 
@@ -401,8 +432,8 @@ namespace bndr {
 	Mesh::Mesh(const char* objFile, uint shaderProgramType, std::vector<float> color) {
 
 		std::pair<std::vector<float>, std::vector<uint>> pair = Mesh::LoadObjFile(objFile, color);
-		// create the vertex array object
-		vao = new VertexArray(pair.first, pair.second);
+		// create the vertex array object (and we are using normals)
+		vao = new VertexArray(pair.first, pair.second, true, false);
 		// switch on shader program type
 		switch (shaderProgramType) {
 
@@ -417,13 +448,17 @@ namespace bndr {
 		}
 
 		// set the matrices to default values
-		Translate(-1.0f, -2.0f, -6.0f);
+		Translate(-1.0f, -2.0f, 0.0f);
 		Rotate(0.0f, {});
 		Scale(0.125f, 0.125f, 0.125f);
 
 		glm::mat4x4 cameraView(1.0f);
 		CameraView(cameraView);
 		Project(1.57f, 1280.0f/720.0f, 0.1f, 100.0f);
+
+		// set the light direction
+		float lightDir[3] = { 0.0f, 0.0f, 1.0f };
+		program.SetUniformValue("lightDir", lightDir, bndr::VEC3);
 
 	}
 
@@ -480,9 +515,6 @@ namespace bndr {
 	}
 
 	void Mesh::Render() {
-
-		glm::vec4 lightNormal(0.0f, 0.0f, 1.0f, 1.0f);
-		program.SetUniformValue("lightNormal", &lightNormal[0], bndr::VEC4);
 
 		program.Use();
 		vao->Bind();

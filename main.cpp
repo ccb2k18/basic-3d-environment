@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 
 	glm::vec4 camera(1.0f, 1.0f, 1.0f, 1.0f);
 	bndr::Window window(1280, 720, "My Bndr Window");
-	bndr::Mesh mesh("models/l_tetris.obj", bndr::BASIC_MODEL, { 1.0f, 0.0f, 0.0f, 1.0f });
+	bndr::Mesh mesh("models/s_tetris.obj", bndr::BASIC_MODEL, { 0.5f, 0.0f, 0.5f, 1.0f });
 	bndr::Clock clock;
 
 	while (window.Update(clock.DeltaTime())) {
