@@ -155,13 +155,14 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="assets\camera.h" />
     <ClInclude Include="assets\gpu_objects.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\default_shdr\default_frag.glsl" />
     <None Include="shaders\default_shdr\default_vert.glsl" />
-    <None Include="shaders\tetrimino_shdr\tetrimino_frag.glsl" />
-    <None Include="shaders\tetrimino_shdr\tetrimino_vert.glsl" />
+    <None Include="shaders\basic_model_shdr\basic_model_frag.glsl" />
+    <None Include="shaders\basic_model_shdr\basic_model_vert.glsl" />
     <None Include="shaders\texture_shdr\textures2_frag.glsl" />
     <None Include="shaders\texture_shdr\textures3_frag.glsl" />
     <None Include="shaders\texture_shdr\textures4_frag.glsl" />

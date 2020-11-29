@@ -25,14 +25,15 @@
 
 int main(int argc, char* argv[]) {
 
-	glm::vec3 camera = { 0.0f, 0.0f, 0.0f };
+	glm::vec4 camera(1.0f, 1.0f, 1.0f, 1.0f);
 	bndr::Window window(1280, 720, "My Bndr Window");
-	bndr::Mesh mesh("assets/golden_cube.obj", bndr::BASIC_MODEL, { 1.0f, 0.0f, 0.0f, 1.0f });
+	bndr::Mesh mesh("models/l_tetris.obj", bndr::BASIC_MODEL, { 1.0f, 0.0f, 0.0f, 1.0f });
 	bndr::Clock clock;
 
 	while (window.Update(clock.DeltaTime())) {
 
 		window.Clear(0.5f, 0.75f, 1.0f, 1.0f);
+		mesh.Render();
 		window.Flip();
 	}
 	return 0;

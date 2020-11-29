@@ -8,11 +8,15 @@
 #include <unordered_map>
 #include <glew.h>
 #include <glfw3.h>
+#include <cmath>
 #include <gtc/matrix_transform.hpp>
-#include <glm.hpp>
+#include <gtx/transform.hpp>
+//#include <glm.hpp>
 
 typedef unsigned int uint;
 typedef unsigned char uchar;
+
+std::ostream& operator<<(std::ostream& out, const glm::mat4x4& mat);
 
 namespace bndr {
 
@@ -137,6 +141,13 @@ namespace bndr {
 		~VertexArray();
 	};
 
+	enum rotationAxes {
+
+		X_AXIS = 0,
+		Y_AXIS = 1,
+		Z_AXIS = 2
+	};
+
 	enum shaderTypes {
 
 		VERT_SHDR = GL_VERTEX_SHADER,
@@ -206,10 +217,10 @@ namespace bndr {
 				throw std::exception("The maximum number of textures per fragment shader is 6\n");
 			}
 		}
-		// create a program for a tetrimino
+		// create a program for a basic model (3d model no texture)
 		static Program BasicModel() {
 
-			return Program({ {"shaders/tetrimino_shdr/tetrimino_vert.glsl", bndr::VERT_SHDR}, {"shaders/tetrimino_shdr/tetrimino_frag.glsl", bndr::FRAG_SHDR} });
+			return Program({ {"shaders/basic_model_shdr/basic_model_vert.glsl", bndr::VERT_SHDR}, {"shaders/basic_model_shdr/basic_model_frag.glsl", bndr::FRAG_SHDR} });
 		}
 	};
 
@@ -224,11 +235,11 @@ namespace bndr {
 		Mesh(const char* objFile, uint shaderProgramType, std::vector<float> color = {1.0f, 1.0f, 1.0f, 1.0f});
 		// methods to update uniforms
 		void Translate(float xTrans, float yTrans, float zTrans);
-		void Rotate(float angle, const std::vector<uint>& axes, const glm::vec3& center = { 0.0f, 0.0f, 0.0f });
+		void Rotate(float angle, const std::vector<uint>& axes);
 		void Scale(float xScale, float yScale, float zScale);
 
-		void CameraView(const glm::mat4x4& cameraMat);
-		void Project(const glm::mat4x4& perspective);
+		void CameraView(glm::mat4x4& cameraMat);
+		void Project(float fov, float aspectRatio, float zNear, float zFar);
 		// static method to load an object file
 		static std::pair<std::vector<float>, std::vector<uint>> LoadObjFile(const char* objFile, std::vector<float> color){
 
@@ -271,13 +282,11 @@ namespace bndr {
 				// faces (indices to vertices)
 				else if (line[0] == 'f' && line[1] == ' ') {
 
-					// replace slashes with a space
-					ReplaceStrChar(line, '/', ' ');
 					std::vector<std::string> splitLine = SplitStr(line, ' ');
 					// get the indices whilst skipping f
 					for (int i = 1; i < splitLine.size(); i++) {
 
-						indices.push_back((uint)std::stoi(splitLine[i]));
+						indices.push_back((uint)(std::stoi(splitLine[i])-1));
 					}
 				}
 			}
@@ -287,6 +296,7 @@ namespace bndr {
 			return {vertices, indices};
 
 		}
+		void Render();
 		~Mesh();
 	};
 }

@@ -8,6 +8,15 @@ void GLClearErrors() {
 	}
 }
 
+std::ostream& operator<<(std::ostream& out, const glm::mat4x4& mat) {
+
+	out << "\n" << mat[0][0] << "\t" << mat[0][1] << "\t" << mat[0][2] << "\t" << mat[0][3] << "\n";
+	out << mat[1][0] << "\t" << mat[1][1] << "\t" << mat[1][2] << "\t" << mat[1][3] << "\n";
+	out << mat[2][0] << "\t" << mat[2][1] << "\t" << mat[2][2] << "\t" << mat[2][3] << "\n";
+	out << mat[3][0] << "\t" << mat[3][1] << "\t" << mat[3][2] << "\t" << mat[3][3] << "\n";
+	return out;
+}
+
 namespace bndr {
 
 	// define the static screenSize
@@ -406,6 +415,16 @@ namespace bndr {
 			program = Program::BasicModel();
 			break;
 		}
+
+		// set the matrices to default values
+		Translate(-1.0f, -2.0f, -6.0f);
+		Rotate(0.0f, {});
+		Scale(0.125f, 0.125f, 0.125f);
+
+		glm::mat4x4 cameraView(1.0f);
+		CameraView(cameraView);
+		Project(1.57f, 1280.0f/720.0f, 0.1f, 100.0f);
+
 	}
 
 	void Mesh::Translate(float xTrans, float yTrans, float zTrans) {
@@ -417,24 +436,59 @@ namespace bndr {
 		program.SetUniformValue("translation", &translation[0][0], bndr::MAT4);
 	}
 
-	void Mesh::Rotate(float angle, const std::vector<uint>& axes, const glm::vec3& center) {
+	void Mesh::Rotate(float angle, const std::vector<uint>& axes) {
 
+		glm::mat4x4 rotation(1.0f);
+		// for each axis specified add this to our rotation matrix
+		for (const uint& axis : axes) {
 
+			switch (axis) {
+
+			case bndr::X_AXIS:
+
+				rotation *= glm::rotate(angle, glm::vec3(1.0f, 0.0f, 0.0f));
+				break;
+			case bndr::Y_AXIS:
+
+				rotation *= glm::rotate(angle, glm::vec3(0.0f, 1.0f, 0.0f));
+				break;
+			case bndr::Z_AXIS:
+
+				rotation *= glm::rotate(angle, glm::vec3(0.0f, 0.0f, 1.0f));
+				break;
+			}
+		}
+		// set the uniform
+		program.SetUniformValue("rotation", &rotation[0][0], bndr::MAT4);
 	}
 
 	void Mesh::Scale(float xScale, float yScale, float zScale) {
 
-
+		glm::mat4x4 scale = glm::scale(glm::vec3(xScale, yScale, zScale));
+		program.SetUniformValue("scale", &scale[0][0], bndr::MAT4);
 	}
 
-	void Mesh::CameraView(const glm::mat4x4& cameraMat) {
+	void Mesh::CameraView(glm::mat4x4& cameraMat) {
 
-
+		program.SetUniformValue("cameraView", &cameraMat[0][0], bndr::MAT4);
 	}
 
-	void Mesh::Project(const glm::mat4x4& perspective) {
+	void Mesh::Project(float fov, float aspectRatio, float zNear, float zFar) {
 
+		glm::mat4x4 projection = glm::perspective(fov, aspectRatio, zNear, zFar);
+		program.SetUniformValue("perspective", &projection[0][0], bndr::MAT4);
+	}
 
+	void Mesh::Render() {
+
+		glm::vec4 lightNormal(0.0f, 0.0f, 1.0f, 1.0f);
+		program.SetUniformValue("lightNormal", &lightNormal[0], bndr::VEC4);
+
+		program.Use();
+		vao->Bind();
+		vao->Render();
+		vao->Unbind();
+		program.Unuse();
 	}
 
 	Mesh::~Mesh() {
