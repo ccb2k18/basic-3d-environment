@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <glew.h>
 #include <glfw3.h>
+#include <gtc/matrix_transform.hpp>
 #include <glm.hpp>
 
 typedef unsigned int uint;
@@ -19,6 +20,8 @@ namespace bndr {
 	typedef std::chrono::steady_clock::time_point timePoint;
 	typedef std::chrono::duration<float> duration;
 	
+	std::vector<std::string> SplitStr(const std::string& str, char delimiter = ' ');
+	void ReplaceStrChar(std::string& str, char charToReplace, char replacement);
 
 	// clock object to keep track of deltaTime
 	class Clock {
@@ -99,6 +102,12 @@ namespace bndr {
 		// get the texture opengl id
 		inline uint GetID() { return textureID; }
 		inline void BindUnit(uint index) { glBindTextureUnit(index, textureID); }
+		// create a texture with default settings
+		static Texture Default(const char* bmpFile) {
+
+			return Texture(bmpFile, { {GL_TEXTURE_WRAP_S, GL_REPEAT},
+		{GL_TEXTURE_WRAP_T, GL_REPEAT}, {GL_TEXTURE_MIN_FILTER, GL_LINEAR}, {GL_TEXTURE_MAG_FILTER, GL_LINEAR} });
+		}
 		~Texture();
 	};
 
@@ -144,16 +153,26 @@ namespace bndr {
 		MAT4 = 16
 	};
 
+	enum shaderProgramTypes {
+
+		DEFAULT = 0,
+		BASIC_MODEL = 1
+	};
+
 	// shader program class
 	class Program {
 
 		// program id
 		uint program;
+		// store the already loaded programs
+		static std::unordered_map<const char*, uint> loadedPrograms;
 
 	public:
 
 		// pass in a vector of shaderFileNames with their corresponding enums (ie {{"myVertexShader.glsl", GL_VERTEX_SHADER},...})
 		Program(const std::vector<std::pair<const char*, uint>>& shaderFileNameEnumPairs);
+		// default constructor
+		Program() : program((uint)0) {}
 		// compile an individual shader
 		uint CompileShader(const char* shaderFileName, uint shaderEnum);
 		// link the entire program
@@ -161,7 +180,7 @@ namespace bndr {
 		inline void Use() { glUseProgram(program); }
 		inline void Unuse() { glUseProgram(0); }
 		void SetUniformValue(const char* uniformName, float* dataBegin, uint dataTypeEnum);
-		// for setting integer values
+		// set integer values
 		void SetUniformValue(const char* uniformName, int* dataBegin, uint size);
 		inline int GetUniformLocation(const char* uniformName) { return glGetUniformLocation(program, uniformName); }
 		// returns a basic shader that colors a shape one color
@@ -187,19 +206,87 @@ namespace bndr {
 				throw std::exception("The maximum number of textures per fragment shader is 6\n");
 			}
 		}
+		// create a program for a tetrimino
+		static Program BasicModel() {
+
+			return Program({ {"shaders/tetrimino_shdr/tetrimino_vert.glsl", bndr::VERT_SHDR}, {"shaders/tetrimino_shdr/tetrimino_frag.glsl", bndr::FRAG_SHDR} });
+		}
 	};
 
-	// mesh that contains vertices, color, texture, and can load it all from a blender object file
+	// mesh that contains vertices, color, and can load it all from a blender object file
 	class Mesh {
 
 		VertexArray* vao;
-		Program* program;
-		// textures to store
-		std::vector<Texture> textures;
+		Program program;
 
 	public:
 
-		Mesh(const char* objFile, std::vector<const char*> TexBMPFiles = {});
+		Mesh(const char* objFile, uint shaderProgramType, std::vector<float> color = {1.0f, 1.0f, 1.0f, 1.0f});
+		// methods to update uniforms
+		void Translate(float xTrans, float yTrans, float zTrans);
+		void Rotate(float angle, const std::vector<uint>& axes, const glm::vec3& center = { 0.0f, 0.0f, 0.0f });
+		void Scale(float xScale, float yScale, float zScale);
+
+		void CameraView(const glm::mat4x4& cameraMat);
+		void Project(const glm::mat4x4& perspective);
+		// static method to load an object file
+		static std::pair<std::vector<float>, std::vector<uint>> LoadObjFile(const char* objFile, std::vector<float> color){
+
+			bool objectHasColors = false;
+			std::vector<float> temp = { 1.0f, 1.0f, 1.0f, 1.0f };
+			// if the default color has not been changed then it is assumed the object file has colors
+			if (color == temp) { objectHasColors = true; }
+			// create a ifstream
+			std::ifstream objStream(objFile, std::ios::in);
+			// check if the file is open
+			if (!objStream.is_open()) {
+
+				throw std::runtime_error("Cannot open object file\n");
+			}
+
+			std::vector<float> vertices;
+			std::vector<uint> indices;
+			std::string line;
+			while (std::getline(objStream, line)) {
+
+				// these are the position vertices
+				if (line[0] == 'v' && line[1] == ' ') {
+
+					// split up the data in each line
+					std::vector<std::string> splitLine = SplitStr(line, ' ');
+					// we skip the v so we set i to 1
+					for (int i = 1; i < splitLine.size(); i++) {
+
+						vertices.push_back(std::stof(splitLine[i]));
+					}
+					// now add the default color if the object file doesn't specify it
+					if (!objectHasColors) {
+
+						for (float& fl : color) {
+
+							vertices.push_back(fl);
+						}
+					}
+				}
+				// faces (indices to vertices)
+				else if (line[0] == 'f' && line[1] == ' ') {
+
+					// replace slashes with a space
+					ReplaceStrChar(line, '/', ' ');
+					std::vector<std::string> splitLine = SplitStr(line, ' ');
+					// get the indices whilst skipping f
+					for (int i = 1; i < splitLine.size(); i++) {
+
+						indices.push_back((uint)std::stoi(splitLine[i]));
+					}
+				}
+			}
+			// close the object file stream
+			objStream.close();
+			// return the pair
+			return {vertices, indices};
+
+		}
 		~Mesh();
 	};
 }

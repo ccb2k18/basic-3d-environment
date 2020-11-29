@@ -14,6 +14,42 @@ namespace bndr {
 	float Window::screenSize[2];
 	// define the static map of textures
 	std::unordered_map<const char*, uint> Texture::loadedTextures;
+	// define the static map of programs
+	std::unordered_map<const char*, uint> Program::loadedPrograms;
+
+	// string manipulation methods
+	std::vector<std::string> SplitStr(const std::string& str, char delimiter) {
+
+		std::vector<std::string> strVector;
+		std::string myStr = "";
+		for (const char& ch : str) {
+
+			if (ch != delimiter) {
+
+				myStr += ch;
+			}
+			else {
+
+				strVector.push_back(myStr);
+				myStr = "";
+			}
+		}
+		// one final push back
+		strVector.push_back(myStr);
+		return strVector;
+	}
+
+	void ReplaceStrChar(std::string& str, char charToReplace, char replacement) {
+
+		for (char& ch : str) {
+
+			// replace the chars that need to be replaced
+			if (ch == charToReplace) {
+
+				ch = replacement;
+			}
+		}
+	}
 
 	// bndr::Window method definitions
 
@@ -123,7 +159,7 @@ namespace bndr {
 	Texture::~Texture() {
 
 		// take care of opengl texture
-		glDeleteTextures(1, &textureID);
+		//glDeleteTextures(1, &textureID);
 
 	}
 
@@ -203,17 +239,42 @@ namespace bndr {
 
 	Program::Program(const std::vector<std::pair<const char*, uint>>& shaderFileNameEnumPairs) {
 
-		program = glCreateProgram();
+		// define the key to check
+		std::string keyStr = "";
+		for (const std::pair<const char*, uint>& p : shaderFileNameEnumPairs) {
 
+			keyStr += p.first;
+		}
+		const char* key = keyStr.c_str();
+		// check if the program exists
+		if (Program::loadedPrograms.find(key) != Program::loadedPrograms.end()) {
+
+			std::cout << "Program already exists!\n";
+			// reuse existing program
+			program = Program::loadedPrograms[key];
+			// exit since compilation has already taken place
+			return;
+		}
+		program = glCreateProgram();
+		// store the program in loadedPrograms
+		Program::loadedPrograms.insert({ key, program });
 		std::vector<uint> ids(shaderFileNameEnumPairs.size());
 		int i = 0;
+		// for each shader compile it
 		for (const std::pair<const char*, uint>& pair : shaderFileNameEnumPairs) {
 
 			uint id = CompileShader(pair.first, pair.second);
 			ids[i] = id;
 			i++;
 		}
+		// link all the shaders together
 		LinkProgram(ids);
+		for (std::unordered_map<const char*, uint>::iterator p = Program::loadedPrograms.begin(); p != Program::loadedPrograms.end(); p++) {
+
+			std::pair<const char*, uint> kv = *p;
+			std::cout << "image File: " << kv.first << "\tid: " << kv.second << "\n";
+		}
+		std::cout << "\n\n\n";
 
 	}
 
@@ -328,7 +389,50 @@ namespace bndr {
 
 	// bndr::Mesh method definitions
 
-	Mesh::Mesh(const char* objFile, std::vector<const char*> TexBMPFiles) {
+	Mesh::Mesh(const char* objFile, uint shaderProgramType, std::vector<float> color) {
+
+		std::pair<std::vector<float>, std::vector<uint>> pair = Mesh::LoadObjFile(objFile, color);
+		// create the vertex array object
+		vao = new VertexArray(pair.first, pair.second);
+		// switch on shader program type
+		switch (shaderProgramType) {
+
+		case bndr::DEFAULT:
+
+			program = Program::Default();
+			break;
+		case bndr::BASIC_MODEL:
+
+			program = Program::BasicModel();
+			break;
+		}
+	}
+
+	void Mesh::Translate(float xTrans, float yTrans, float zTrans) {
+
+		glm::mat4x4 translation(1.0f);
+		translation[0][3] = xTrans;
+		translation[1][3] = yTrans;
+		translation[2][3] = zTrans;
+		program.SetUniformValue("translation", &translation[0][0], bndr::MAT4);
+	}
+
+	void Mesh::Rotate(float angle, const std::vector<uint>& axes, const glm::vec3& center) {
+
+
+	}
+
+	void Mesh::Scale(float xScale, float yScale, float zScale) {
+
+
+	}
+
+	void Mesh::CameraView(const glm::mat4x4& cameraMat) {
+
+
+	}
+
+	void Mesh::Project(const glm::mat4x4& perspective) {
 
 
 	}
@@ -336,6 +440,5 @@ namespace bndr {
 	Mesh::~Mesh() {
 
 		delete vao;
-		delete program;
 	}
 }

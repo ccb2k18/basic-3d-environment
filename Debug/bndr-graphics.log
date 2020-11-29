@@ -1,5 +1,9 @@
 ﻿  gpu_objects.cpp
+D:\C++ Projects\bndr-graphics-lib\assets\gpu_objects.h(258,24): warning C4018: '<': signed/unsigned mismatch
+D:\C++ Projects\bndr-graphics-lib\assets\gpu_objects.h(278,24): warning C4018: '<': signed/unsigned mismatch
   main.cpp
+D:\C++ Projects\bndr-graphics-lib\assets\gpu_objects.h(258,24): warning C4018: '<': signed/unsigned mismatch
+D:\C++ Projects\bndr-graphics-lib\assets\gpu_objects.h(278,24): warning C4018: '<': signed/unsigned mismatch
   Generating Code...
 LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
   bndr-graphics.vcxproj -> D:\C++ Projects\bndr-graphics-lib\Debug\bndr-graphics.exe

@@ -37,5 +37,7 @@
     <None Include="shaders\texture_shdr\textures4_frag.glsl" />
     <None Include="shaders\texture_shdr\textures5_frag.glsl" />
     <None Include="shaders\texture_shdr\textures6_frag.glsl" />
+    <None Include="shaders\tetrimino_shdr\tetrimino_frag.glsl" />
+    <None Include="shaders\tetrimino_shdr\tetrimino_vert.glsl" />
   </ItemGroup>
 </Project>

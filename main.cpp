@@ -1,9 +1,6 @@
 #include "assets/gpu_objects.h"
 
-int main(int argc, char* argv[]) {
-
-	bndr::Window window(720, 720, "My Bndr Window");
-	bndr::VertexArray vao({
+/*bndr::VertexArray vao({
 		-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f,
 		-0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
 		0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
@@ -24,16 +21,18 @@ int main(int argc, char* argv[]) {
 	int loc = program.GetUniformLocation("myTex");
 	int arr[2] = { 0, 1 };
 	program.SetUniformValue("myTex", arr, 2);
-	vao.Unbind();
+	vao.Unbind();*/
+
+int main(int argc, char* argv[]) {
+
+	glm::vec3 camera = { 0.0f, 0.0f, 0.0f };
+	bndr::Window window(1280, 720, "My Bndr Window");
+	bndr::Mesh mesh("assets/golden_cube.obj", bndr::BASIC_MODEL, { 1.0f, 0.0f, 0.0f, 1.0f });
 	bndr::Clock clock;
+
 	while (window.Update(clock.DeltaTime())) {
 
 		window.Clear(0.5f, 0.75f, 1.0f, 1.0f);
-		program.Use();
-		vao.Bind();
-		vao.Render();
-		vao.Unbind();
-		program.Unuse();
 		window.Flip();
 	}
 	return 0;
