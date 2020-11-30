@@ -480,7 +480,6 @@ namespace bndr {
 		float lightDir[3] = { 0.0f, 0.0f, 1.0f };
 		program.SetUniformValue("lightDir", lightDir, bndr::VEC3);
 
-
 	}
 
 	void Mesh::Translate(float xTrans, float yTrans, float zTrans) {
@@ -490,7 +489,7 @@ namespace bndr {
 		translation[1][3] = yTrans;
 		translation[2][3] = zTrans;
 		trans = translation;
-		program.SetUniformValue("translation", &translation[0][0], bndr::MAT4);
+		program.SetUniformValue("translation", glm::value_ptr(translation), bndr::MAT4);
 	}
 
 	void Mesh::Rotate(float angle, const std::vector<uint>& axes) {
@@ -517,20 +516,20 @@ namespace bndr {
 		}
 		rot = rotation;
 		// set the uniform
-		program.SetUniformValue("rotation", &rotation[0][0], bndr::MAT4);
+		program.SetUniformValue("rotation", glm::value_ptr(rotation), bndr::MAT4);
 	}
 
 	void Mesh::Scale(float xScale, float yScale, float zScale) {
 
 		glm::mat4x4 scale = glm::scale(glm::vec3(xScale, yScale, zScale));
 		sca = scale;
-		program.SetUniformValue("scale", &scale[0][0], bndr::MAT4);
+		program.SetUniformValue("scale", glm::value_ptr(scale), bndr::MAT4);
 	}
 
 	void Mesh::CameraView(glm::mat4x4& cameraMat) {
 
 		camView = cameraMat;
-		program.SetUniformValue("cameraView", &cameraMat[0][0], bndr::MAT4);
+		program.SetUniformValue("cameraView", glm::value_ptr(cameraMat), bndr::MAT4);
 	}
 
 	void Mesh::Project(float fov, float aspectRatio, float zNear, float zFar) {

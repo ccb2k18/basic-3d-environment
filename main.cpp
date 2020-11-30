@@ -24,7 +24,7 @@
 	vao.Unbind();*/
 
 // global camera
-static glm::vec4 gCamera(0.0f, 0.0f, 10.0f, 0.0f);
+static glm::vec4 gCamera(0.0f, 0.0f, -10.0f, 0.0f);
 
 // the global delta time
 static float gDeltaTime = 0.0f;
@@ -129,14 +129,21 @@ int main(int argc, char* argv[]) {
 
 	bndr::Window window(1280, 720, "My Bndr Window");
 	window.SetKeyCallBack(keyCallBack);
-	bndr::Mesh mesh("models/s_tetris.obj", bndr::BASIC_MODEL, { 0.5f, 0.0f, 0.5f, 1.0f });
-	/*bndr::Mesh mesh({
+	//bndr::Mesh mesh("models/s_tetris.obj", bndr::BASIC_MODEL, { 0.5f, 0.0f, 0.0f, 1.0f });
+	bndr::Mesh mesh2({
 		-0.5f, -0.5f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-		-0.5f, 0.5f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-		0.5f, 0.5f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-		0.5f, -0.5f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f
-		}, {0, 1, 2, 2, 3, 0}, false, false);*/
-	std::vector<bndr::Mesh*> meshes = { &mesh };
+		-0.5f, 0.5f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+		0.5f, -0.5f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+		-0.5f, 0.5f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+		0.5f, 0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f
+		}, {
+			0, 1, 2,
+			2, 3, 0,
+			1, 4, 5,
+			5, 2, 1
+		}, false, false);
+	std::vector<bndr::Mesh*> meshes = { &mesh2 };
 	bndr::Clock clock;
 
 	while (Update(gDeltaTime, window, meshes)) {
@@ -144,7 +151,8 @@ int main(int argc, char* argv[]) {
 		std::cout << gCamera.x << "\t" << gCamera.y << "\t" << gCamera.z << "\n";
 		gDeltaTime = clock.DeltaTime();
 		window.Clear(0.25f, 0.375f, 0.5f, 1.0f);
-		mesh.Render();
+		//mesh.Render();
+		mesh2.Render();
 		window.Flip();
 	}
 	return 0;

@@ -11,6 +11,7 @@
 #include <cmath>
 #include <gtc/matrix_transform.hpp>
 #include <gtx/transform.hpp>
+#include <gtc/type_ptr.hpp>
 //#include <glm.hpp>
 
 typedef unsigned int uint;

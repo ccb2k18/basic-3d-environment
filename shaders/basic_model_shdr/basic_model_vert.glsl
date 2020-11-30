@@ -29,7 +29,7 @@ void main(){
 
 	
 	mat4x4 MVP = perspective * cameraView * translation * rotation * scale;
-	vec4 worldPos = MVP * vec4(position, 1.0);
+	vec4 worldPos = transpose(MVP) * vec4(position, 1.0);
 	/*worldPos.x /= worldPos.w;
 	worldPos.y /= worldPos.w;
 	worldPos.z /= worldPos.w;*/
