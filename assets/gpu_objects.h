@@ -52,6 +52,7 @@ namespace bndr {
 
 		Window(int width, int height, const char* title);
 		bool Update(float deltaTime);
+		inline void SetKeyCallBack(void (*keyCallback)(GLFWwindow*, int, int, int, int)) { glfwSetKeyCallback(window, keyCallback); }
 		inline void Clear(float red, float green, float blue, float alpha) { glClearColor(red, green, blue, alpha); glClear(GL_COLOR_BUFFER_BIT); }
 		inline void Flip() { glfwSwapBuffers(window); }
 		~Window();
@@ -229,10 +230,19 @@ namespace bndr {
 
 		VertexArray* vao;
 		Program program;
+		glm::mat4x4 trans;
+		glm::mat4x4 rot;
+		glm::mat4x4 sca;
+		glm::mat4x4 camView;
+		glm::mat4x4 persp;
+		int counter = 0;
 
 	public:
 
+		// from object file
 		Mesh(const char* objFile, uint shaderProgramType, std::vector<float> color = {1.0f, 1.0f, 1.0f, 1.0f});
+		// user entered
+		Mesh(std::vector<float> vertices, std::vector<uint> indices, bool usingNormals = false, bool usingTextures = false);
 		// methods to update uniforms
 		void Translate(float xTrans, float yTrans, float zTrans);
 		void Rotate(float angle, const std::vector<uint>& axes);
@@ -290,7 +300,7 @@ namespace bndr {
 					posIndex++;
 				}
 				// we are loading normal data
-				else if (line[0] == 'v' && line[1] == 'n') {
+				/*else if (line[0] == 'v' && line[1] == 'n') {
 
 					// add the empty vector to put the normals in
 					normals2D.push_back({});
@@ -302,7 +312,7 @@ namespace bndr {
 					}
 					// increment the normalsIndex
 					normalsIndex++;
-				}
+				}*/
 
 				// faces (indices to vertices and normals)
 				else if (line[0] == 'f' && line[1] == ' ') {
@@ -320,9 +330,9 @@ namespace bndr {
 						indices.push_back((uint)(std::stoi(pair[0]) - 1));
 						// however do not add pair[1] to indices but instead use it to add the normals
 						// to the appropriate position vector in vertices2D
-						vertices2D[posI].push_back(normals2D[normI][0]);
+						/*vertices2D[posI].push_back(normals2D[normI][0]);
 						vertices2D[posI].push_back(normals2D[normI][1]);
-						vertices2D[posI].push_back(normals2D[normI][2]);
+						vertices2D[posI].push_back(normals2D[normI][2]);*/
 
 					}
 				}
@@ -349,6 +359,7 @@ namespace bndr {
 			return {vertices, indices};
 
 		}
+		void Update(float deltaTime, const glm::vec4& cameraPos);
 		void Render();
 		~Mesh();
 	};
