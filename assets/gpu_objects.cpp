@@ -411,7 +411,7 @@ namespace bndr {
 			break;
 		case 16:
 
-			glUniformMatrix4fv(location, 1, GL_FALSE, dataBegin);
+			glUniformMatrix4fv(location, 1, GL_TRUE, dataBegin);
 			break;
 		default:
 			break;
@@ -448,7 +448,7 @@ namespace bndr {
 		}
 
 		// set the matrices to default values
-		Translate(0.0f, 0.0f, 0.0f);
+		Translate(0.0f, 0.0f, 5.0f);
 		Rotate(0.0f, {});
 		Scale(0.125f, 0.125f, 0.125f);
 
