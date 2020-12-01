@@ -54,7 +54,10 @@ namespace bndr {
 		Window(int width, int height, const char* title);
 		bool Update(float deltaTime);
 		inline void SetKeyCallBack(void (*keyCallback)(GLFWwindow*, int, int, int, int)) { glfwSetKeyCallback(window, keyCallback); }
-		inline void Clear(float red, float green, float blue, float alpha) { glClearColor(red, green, blue, alpha); glClear(GL_COLOR_BUFFER_BIT); }
+		inline void SetCursorPosCallback(void (*cursorCallback)(GLFWwindow*, double, double)) { glfwSetCursorPosCallback(window, cursorCallback); }
+		inline void Clear(float red, float green, float blue, float alpha) { glClearColor(red, green, blue, alpha); glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
+		static inline float GetScreenWidth() { return screenSize[0]; }
+		static inline float GetScreenHeight() { return screenSize[1]; }
 		inline void Flip() { glfwSwapBuffers(window); }
 		~Window();
 
@@ -364,5 +367,109 @@ namespace bndr {
 		void Render();
 		~Mesh();
 	};
+
+
+	// camera namespace. Since all variables and methods are static, making it a class would be suboptimal.
+	namespace cmra {
+
+		static glm::vec4 position(0.0f, 0.0f, 10.0f, 1.0f);
+
+		static float yaw = 1.57f;
+		static float pitch = 0.0f;
+
+		// controls movement
+		static bool moveX = false;
+		static bool moveY = false;
+		static bool moveZ = false;
+		// sign for direction
+		static float xSign = 1.0f;
+		static float ySign = 1.0f;
+		static float zSign = 1.0f;
+
+		static float speed = 2.0f;
+
+		static void keyCallBack(GLFWwindow* win, int key, int scancode, int action, int mods) {
+
+			// forward Z press
+			if (key == GLFW_KEY_W && action == GLFW_PRESS) {
+
+				moveZ = true;
+				zSign = -1.0f;
+			}
+			// backward Z press
+			if (key == GLFW_KEY_S && action == GLFW_PRESS) {
+
+				moveZ = true;
+				zSign = 1.0f;
+			}
+			// Z release
+			if ((key == GLFW_KEY_W || key == GLFW_KEY_S) && action == GLFW_RELEASE) {
+
+				moveZ = false;
+				zSign = 1.0f;
+			}
+
+			// forward X press
+			if (key == GLFW_KEY_D && action == GLFW_PRESS) {
+
+				moveX = true;
+				xSign = 1.0f;
+			}
+			// backward X press
+			if (key == GLFW_KEY_A && action == GLFW_PRESS) {
+
+				moveX = true;
+				xSign = -1.0f;
+			}
+			// X release
+			if ((key == GLFW_KEY_D || key == GLFW_KEY_A) && action == GLFW_RELEASE) {
+
+				moveX = false;
+				xSign = 1.0f;
+			}
+
+			// forward Y press
+			if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
+
+				moveY = true;
+				ySign = 1.0f;
+			}
+			// backward Y press
+			if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
+
+				moveY = true;
+				ySign = -1.0f;
+			}
+			// Y release
+			if ((key == GLFW_KEY_UP || key == GLFW_KEY_DOWN) && action == GLFW_RELEASE) {
+
+				moveY = false;
+				ySign = 1.0f;
+			}
+
+		}
+
+		static void cursorCallBack(GLFWwindow* win, double xPos, double yPos) {
+
+			std::cout << "mouse X: " << xPos << "\tmouse Y: " << yPos << "\n";
+		}
+
+		static void update(float deltaTime) {
+
+			if (moveX) {
+
+				position.x += deltaTime * xSign * speed;
+			}
+			if (moveY) {
+
+				position.y += deltaTime * ySign * speed;
+			}
+			if (moveZ) {
+
+				position.z += deltaTime * zSign * speed;
+			}
+		}
+
+	}
 }
 

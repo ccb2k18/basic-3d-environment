@@ -105,6 +105,11 @@ namespace bndr {
 		screenSize[0] = (float)width;
 		screenSize[1] = (float)height;
 
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS);
+
+		//glDepthMask(GL_FALSE);
+
 	}
 
 	bool Window::Update(float deltaTime) {
@@ -555,7 +560,7 @@ namespace bndr {
 			std::cout << mvp;
 			counter++;
 		}
-		Translate(cameraPos.x, cameraPos.y, cameraPos.z);
+		Translate(-cameraPos.x, -cameraPos.y, cameraPos.z);
 	}
 
 	void Mesh::Render() {
