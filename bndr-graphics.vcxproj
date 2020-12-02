@@ -155,7 +155,6 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="assets\camera.h" />
     <ClInclude Include="assets\gpu_objects.h" />
   </ItemGroup>
   <ItemGroup>

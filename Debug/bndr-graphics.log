@@ -1,10 +1,5 @@
 ﻿  gpu_objects.cpp
-D:\C++ Projects\bndr-graphics-lib\assets\gpu_objects.h(291,24): warning C4018: '<': signed/unsigned mismatch
-D:\C++ Projects\bndr-graphics-lib\assets\gpu_objects.h(327,24): warning C4018: '<': signed/unsigned mismatch
-D:\C++ Projects\bndr-graphics-lib\assets\gpu_objects.h(357,22): warning C4018: '<': signed/unsigned mismatch
-  main.cpp
-D:\C++ Projects\bndr-graphics-lib\assets\gpu_objects.h(291,24): warning C4018: '<': signed/unsigned mismatch
-D:\C++ Projects\bndr-graphics-lib\assets\gpu_objects.h(327,24): warning C4018: '<': signed/unsigned mismatch
-D:\C++ Projects\bndr-graphics-lib\assets\gpu_objects.h(357,22): warning C4018: '<': signed/unsigned mismatch
-  Generating Code...
+D:\C++ Projects\bndr-graphics-lib\assets\gpu_objects.h(315,24): warning C4018: '<': signed/unsigned mismatch
+D:\C++ Projects\bndr-graphics-lib\assets\gpu_objects.h(351,24): warning C4018: '<': signed/unsigned mismatch
+D:\C++ Projects\bndr-graphics-lib\assets\gpu_objects.h(381,22): warning C4018: '<': signed/unsigned mismatch
   bndr-graphics.vcxproj -> D:\C++ Projects\bndr-graphics-lib\Debug\bndr-graphics.exe

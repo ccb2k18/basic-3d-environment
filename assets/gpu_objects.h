@@ -12,6 +12,7 @@
 #include <gtc/matrix_transform.hpp>
 #include <gtx/transform.hpp>
 #include <gtc/type_ptr.hpp>
+#define PI 3.1415927f
 //#include <glm.hpp>
 
 typedef unsigned int uint;
@@ -26,6 +27,9 @@ namespace bndr {
 	typedef std::chrono::steady_clock::time_point timePoint;
 	typedef std::chrono::duration<float> duration;
 	
+	// forward declare Camera
+	class Camera;
+
 	std::vector<std::string> SplitStr(const std::string& str, char delimiter = ' ');
 	void ReplaceStrChar(std::string& str, char charToReplace, char replacement);
 
@@ -47,17 +51,37 @@ namespace bndr {
 	class Window {
 
 		GLFWwindow* window = nullptr;
-		// screen dimension variables {width, height}
-		static float screenSize[2];
+		// used as shortcut to leave window
+		static bool ctrl;
+		static bool shift;
+		static bool q;
+		// keep track of previous mouse position
+		static glm::vec2 prevMousePos;
 	public:
 
 		Window(int width, int height, const char* title);
-		bool Update(float deltaTime);
+		bool Update(float deltaTime, Camera& camera);
+		// callback when user presses/releases keys
 		inline void SetKeyCallBack(void (*keyCallback)(GLFWwindow*, int, int, int, int)) { glfwSetKeyCallback(window, keyCallback); }
+		// callback when user moves mouse
 		inline void SetCursorPosCallback(void (*cursorCallback)(GLFWwindow*, double, double)) { glfwSetCursorPosCallback(window, cursorCallback); }
+		// sets the cursor mouse position
+		inline void SetCursorPos(float x, float y) { glfwSetCursorPos(window, (double)x, (double)y); }
+		// gets the cursor mouse position
+		inline glm::vec2 GetCursorPos() { double x, y; glfwGetCursorPos(window, &x, &y); return glm::vec2((float)x, (float)y); }
+		// clear the screen
 		inline void Clear(float red, float green, float blue, float alpha) { glClearColor(red, green, blue, alpha); glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
-		static inline float GetScreenWidth() { return screenSize[0]; }
-		static inline float GetScreenHeight() { return screenSize[1]; }
+		// get the screen size
+		inline std::pair<float, float> GetScreenSize() { int w, h; glfwGetWindowSize(window, &w, &h); return { (float)w, (float)h }; }
+		// set the status of whether the ctrl key is pressed
+		static inline void SetCtrlStatus(bool status) { ctrl = status; }
+		// set the status of whether the shift key is pressed
+		static inline void SetShiftStatus(bool status) { shift = status; }
+		// set the status of whether the q key is pressed
+		static inline void SetQStatus(bool status) { q = status; }
+		// handle when the mouse is moved
+		void HandleMouseEvents(float deltaTime, Camera& camera);
+		// flip the display
 		inline void Flip() { glfwSwapBuffers(window); }
 		~Window();
 
@@ -252,7 +276,7 @@ namespace bndr {
 		void Rotate(float angle, const std::vector<uint>& axes);
 		void Scale(float xScale, float yScale, float zScale);
 
-		void CameraView(glm::mat4x4& cameraMat);
+		void CameraView(glm::mat4x4 cameraMat);
 		void Project(float fov, float aspectRatio, float zNear, float zFar);
 		// static method to load an object file
 		static std::pair<std::vector<float>, std::vector<uint>> LoadObjFile(const char* objFile, std::vector<float> color){
@@ -363,32 +387,46 @@ namespace bndr {
 			return {vertices, indices};
 
 		}
-		void Update(float deltaTime, const glm::vec4& cameraPos);
+		void Update(float deltaTime);
 		void Render();
 		~Mesh();
 	};
 
+	class Camera {
 
-	// camera namespace. Since all variables and methods are static, making it a class would be suboptimal.
-	namespace cmra {
+		// camera position
+		glm::vec3 pos;
+		// unit vector where the camera is looking
+		glm::vec3 lookDir = glm::vec3(0.0f, 0.0f, 0.0f);
+		// right vector for lookAtMat
+		glm::vec3 right = glm::vec3(0.0f, 0.0f, 0.0f);
+		// up vector
+		glm::vec3 up = glm::vec3(0.0f, 0.0f, 0.0f);
 
-		static glm::vec4 position(0.0f, 0.0f, 10.0f, 1.0f);
-
-		static float yaw = 1.57f;
-		static float pitch = 0.0f;
-
+		glm::mat4x4 lookAtMat = glm::mat4x4(1.0f);
+		// angles
+		float yaw = 1.57f;
+		float pitch = 0.0f;
 		// controls movement
-		static bool moveX = false;
-		static bool moveY = false;
-		static bool moveZ = false;
+		static bool moveX;
+		static bool moveY;
+		static bool moveZ;
 		// sign for direction
-		static float xSign = 1.0f;
-		static float ySign = 1.0f;
-		static float zSign = 1.0f;
+		static float xSign;
+		static float ySign;
+		static float zSign;
 
-		static float speed = 2.0f;
+		float speed = 2.0f;
 
-		static void keyCallBack(GLFWwindow* win, int key, int scancode, int action, int mods) {
+		// mouse pos change vector
+		glm::vec2 mouseChange = glm::vec2(0.0f, 0.0f);
+
+	public:
+
+		Camera(float xPos, float yPos, float zPos) : pos(glm::vec3(xPos, yPos, zPos)) {}
+		Camera(float xPos, float yPos, float zPos, float _yaw, float _pitch) : pos(glm::vec3(xPos, yPos, zPos)), yaw(_yaw), pitch(_pitch) {}
+		//void HandleKeyEvents(GLFWwindow* win, int key, int scancode, int action, int mods);
+		static void HandleKeyEvents(GLFWwindow* win, int key, int scancode, int action, int mods) {
 
 			// forward Z press
 			if (key == GLFW_KEY_W && action == GLFW_PRESS) {
@@ -447,29 +485,39 @@ namespace bndr {
 				ySign = 1.0f;
 			}
 
-		}
+			// check for shortcut keys to quit the game
+			if ((key == GLFW_KEY_LEFT_CONTROL) && action == GLFW_PRESS) {
 
-		static void cursorCallBack(GLFWwindow* win, double xPos, double yPos) {
-
-			std::cout << "mouse X: " << xPos << "\tmouse Y: " << yPos << "\n";
-		}
-
-		static void update(float deltaTime) {
-
-			if (moveX) {
-
-				position.x += deltaTime * xSign * speed;
+				Window::SetCtrlStatus(true);
 			}
-			if (moveY) {
+			else if ((key == GLFW_KEY_LEFT_CONTROL) && action == GLFW_RELEASE) {
 
-				position.y += deltaTime * ySign * speed;
+				Window::SetCtrlStatus(false);
 			}
-			if (moveZ) {
 
-				position.z += deltaTime * zSign * speed;
+			if ((key == GLFW_KEY_LEFT_SHIFT) && action == GLFW_PRESS) {
+
+				Window::SetShiftStatus(true);
 			}
+			else if ((key == GLFW_KEY_LEFT_SHIFT) && action == GLFW_RELEASE) {
+
+				Window::SetCtrlStatus(false);
+			}
+			if ((key == GLFW_KEY_Q) && action == GLFW_PRESS) {
+
+				Window::SetQStatus(true);
+			}
+			else if ((key == GLFW_KEY_Q) && action == GLFW_RELEASE) {
+
+				Window::SetQStatus(false);
+			}
+
 		}
-
-	}
+		void CalculateLookAtMatrix();
+		void Update(float deltaTime);
+		inline glm::mat4x4 GetLookAtMatrix() { return lookAtMat; }
+		inline glm::vec3 GetPos() { return pos; }
+		friend class Window;
+	};
 }
 

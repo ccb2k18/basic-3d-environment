@@ -28,12 +28,16 @@ std::ostream& operator<<(std::ostream& out, const std::vector<float>& vec) {
 
 namespace bndr {
 
-	// define the static screenSize
-	float Window::screenSize[2];
 	// define the static map of textures
 	std::unordered_map<const char*, uint> Texture::loadedTextures;
 	// define the static map of programs
 	std::unordered_map<const char*, uint> Program::loadedPrograms;
+	// for quitting the program
+	bool Window::ctrl = false;
+	bool Window::shift = false;
+	bool Window::q = false;
+
+	glm::vec2 Window::prevMousePos;
 
 	// string manipulation methods
 	std::vector<std::string> SplitStr(const std::string& str, char delimiter) {
@@ -101,10 +105,6 @@ namespace bndr {
 			exit(-1);
 		}
 
-		// define the static screen size vars for the renderer class in the future
-		screenSize[0] = (float)width;
-		screenSize[1] = (float)height;
-
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
 
@@ -112,16 +112,45 @@ namespace bndr {
 
 	}
 
-	bool Window::Update(float deltaTime) {
+	bool Window::Update(float deltaTime, Camera& camera) {
 
 		// check for events
 		glfwPollEvents();
 
-		if (glfwWindowShouldClose(window)) {
+		HandleMouseEvents(deltaTime, camera);
+
+		// if the red x is pressed or the user uses the keyboard shortcut ctrl+shift+q
+		if (glfwWindowShouldClose(window) || (ctrl && shift && q)) {
 
 			return false;
 		}
 		return true;
+	}
+
+	void Window::HandleMouseEvents(float deltaTime, Camera& camera) {
+
+		// make sure the mouse stays inside the screen (for yaw and pitch calculations)
+		glm::vec2 pos = GetCursorPos();
+		std::pair<float, float> size = GetScreenSize();
+		float widthBorder = size.first / 10.0f;
+		float heightBorder = size.second / 10.0f;
+		if ((pos.x < widthBorder || pos.x > size.first - widthBorder) ||
+			(pos.y < heightBorder || pos.y > size.second - heightBorder)) {
+
+			SetCursorPos(size.first / 2.0f, size.second / 2.0f);
+		}
+
+		// get the change in mouse position for the camera only if the mouse has moved
+		if (pos != prevMousePos) {
+
+			camera.mouseChange = glm::normalize(pos - prevMousePos);
+		}
+		else {
+
+			camera.mouseChange = glm::vec2(0.0f, 0.0f);
+		}
+		// update the previous mouse position
+		prevMousePos = pos;
 	}
 
 	// destroy GLFWwindow instance and terminate glfw
@@ -531,7 +560,7 @@ namespace bndr {
 		program.SetUniformValue("scale", glm::value_ptr(scale), bndr::MAT4);
 	}
 
-	void Mesh::CameraView(glm::mat4x4& cameraMat) {
+	void Mesh::CameraView(glm::mat4x4 cameraMat) {
 
 		camView = cameraMat;
 		program.SetUniformValue("cameraView", glm::value_ptr(cameraMat), bndr::MAT4);
@@ -552,7 +581,7 @@ namespace bndr {
 		program.SetUniformValue("perspective", proj, bndr::MAT4);
 	}
 
-	void Mesh::Update(float deltaTime, const glm::vec4& cameraPos) {
+	void Mesh::Update(float deltaTime) {
 
 		if (counter == 0) {
 
@@ -560,7 +589,6 @@ namespace bndr {
 			std::cout << mvp;
 			counter++;
 		}
-		Translate(-cameraPos.x, -cameraPos.y, cameraPos.z);
 	}
 
 	void Mesh::Render() {
@@ -576,5 +604,76 @@ namespace bndr {
 	Mesh::~Mesh() {
 
 		delete vao;
+	}
+
+	// bndr::Camera static member definitions
+
+	// controls movement
+	bool Camera::moveX = false;
+	bool Camera::moveY = false;
+	bool Camera::moveZ = false;
+	// sign for direction
+	float Camera::xSign = 1.0f;
+	float Camera::ySign = 1.0f;
+	float Camera::zSign = 1.0f;
+
+	// bndr::Camera method definitions
+
+	void Camera::Update(float deltaTime) {
+
+		// update the yaw and pitch values
+		if (pitch > 1.55f) { pitch = 1.55f; }
+		if (pitch < -1.55f) { pitch = -1.55f; }
+
+		//if (yaw > 2.0f * PI || yaw < -2.0f * PI) { yaw = 0.0f; }
+
+		yaw += -mouseChange.x * deltaTime;
+		pitch += -mouseChange.y * deltaTime;
+
+		// update directional vector
+		lookDir.x = cosf(yaw) * cosf(pitch);
+		lookDir.y = sinf(pitch);
+		lookDir.z = sinf(yaw) * cosf(pitch);
+		// normalize the directional vector
+		lookDir = glm::normalize(lookDir);
+
+		glm::vec3 tmp = glm::vec3(0.0f, 1.0f, 0.0f);
+		// update right vector
+		right = glm::normalize(glm::cross(tmp, lookDir));
+
+		// update up vector
+		up = glm::normalize(glm::cross(lookDir, right));
+
+		// get vector to correct camera
+		glm::vec3 v = glm::normalize(glm::cross(lookDir, right));
+		glm::vec3 w = v - tmp;
+
+		// recalculate the look at matrix
+		CalculateLookAtMatrix();
+
+		// adjust camera movement
+		if (moveX) {
+
+			pos -= right * deltaTime * xSign * speed;
+		}
+		if (moveY) {
+
+			pos.y += deltaTime * ySign * speed;
+		}
+		if (moveZ) {
+
+			pos -= lookDir * deltaTime * zSign * speed;
+		}
+	}
+
+	void Camera::CalculateLookAtMatrix() {
+
+		lookAtMat = glm::mat4x4({
+			right.x, right.y, right.z, (-right.x * pos.x - right.y * pos.y + right.z * pos.z),
+			up.x, up.y, up.z, (-up.x * pos.x - up.y * pos.y + up.z * pos.z),
+			lookDir.x, lookDir.y, lookDir.z, (-lookDir.x * pos.x - lookDir.y * pos.y + lookDir.z * pos.z),
+			0.0f, 0.0f, 0.0f, 1.0f
+			});
+
 	}
 }

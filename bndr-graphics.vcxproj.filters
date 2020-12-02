@@ -26,9 +26,6 @@
     <ClInclude Include="assets\gpu_objects.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="assets\camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\default_shdr\default_frag.glsl" />
