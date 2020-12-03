@@ -108,7 +108,8 @@ namespace bndr {
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
 
-		//glDepthMask(GL_FALSE);
+		// hide cursor
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
 	}
 
@@ -508,7 +509,7 @@ namespace bndr {
 
 		glm::mat4x4 cameraView(1.0f);
 		CameraView(cameraView);
-		Project(1.57f, 720.0f / 1280.0f, 0.1f, 100.0f);
+		Project(1.57f, 720.0f / 1280.0f, 0.25f, 50.0f);
 
 		// set the light direction
 		float lightDir[3] = { 0.0f, 0.0f, 1.0f };
@@ -627,8 +628,8 @@ namespace bndr {
 
 		//if (yaw > 2.0f * PI || yaw < -2.0f * PI) { yaw = 0.0f; }
 
-		yaw += -mouseChange.x * deltaTime;
-		pitch += -mouseChange.y * deltaTime;
+		yaw += -mouseChange.x * deltaTime * 2.0f;
+		pitch += -mouseChange.y * deltaTime * 2.0f;
 
 		// update directional vector
 		lookDir.x = cosf(yaw) * cosf(pitch);
@@ -654,7 +655,7 @@ namespace bndr {
 		// adjust camera movement
 		if (moveX) {
 
-			pos -= right * deltaTime * xSign * speed;
+			pos -= glm::vec3(-right.x, 0.0f, right.z) * deltaTime * xSign * speed;
 		}
 		if (moveY) {
 
@@ -662,7 +663,7 @@ namespace bndr {
 		}
 		if (moveZ) {
 
-			pos -= lookDir * deltaTime * zSign * speed;
+			pos += glm::vec3(-lookDir.x, 0.0f, lookDir.z) * deltaTime * zSign * speed;
 		}
 	}
 

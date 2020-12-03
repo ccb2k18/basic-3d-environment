@@ -27,12 +27,27 @@ int main(int argc, char* argv[]) {
 		0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
 		0.5f, -0.5f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
 		-0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-		0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f
+		0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+		0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f,
 		}, {
-			0, 1, 2,
+			0, 1, 2, // front
 			2, 3, 0,
-			1, 4, 5,
-			5, 2, 1
+
+			1, 4, 5, // top
+			5, 2, 1,
+
+			7, 6, 0, // bottom
+			0, 3, 7,
+
+			7, 3, 2, // right
+			2, 5, 7,
+
+			0, 6, 4, // left
+			4, 1, 0,
+
+			6, 7, 5, // back
+			5, 4, 6
 		}, false, false);
 	std::vector<bndr::Mesh*> meshes = { &mesh, &mesh2 };
 	bndr::Clock clock;
@@ -40,7 +55,7 @@ int main(int argc, char* argv[]) {
 	while (Update(clock.DeltaTime(), window, camera, meshes)) {
 
 		//std::cout << bndr::cmra::position.x << "\t" << bndr::cmra::position.y << "\t" << bndr::cmra::position.z << "\n";
-		window.Clear(0.25f, 0.375f, 0.5f, 1.0f);
+		window.Clear(0.5f, 0.75f, 1.0f, 1.0f);
 		mesh.Render();
 		mesh2.Render();
 		window.Flip();
