@@ -258,12 +258,6 @@ namespace bndr {
 
 		VertexArray* vao;
 		Program program;
-		glm::mat4x4 trans;
-		glm::mat4x4 rot;
-		glm::mat4x4 sca;
-		glm::mat4x4 camView;
-		glm::mat4x4 persp;
-		int counter = 0;
 
 	public:
 
@@ -296,7 +290,13 @@ namespace bndr {
 			// 2D just refers to the dimensions of the vector and has nothing to do with the data itself
 			std::vector<std::vector<float>> vertices2D;
 			std::vector<std::vector<float>> normals2D;
+			// final 1d vector to add vertex data to
+			std::vector<float> verticesFinal;
 			std::vector<uint> indices;
+			// unordered map of vertex data blocks
+			// each data block has a data block and an index to add to indices
+			std::unordered_map<std::string, std::pair<std::vector<float>, uint>> vertexDataBlocks;
+			uint currentDataBlockIndex = -1;
 			std::string line;
 			// current position index to add positions to in vertices2D
 			int posIndex = 0;
@@ -328,7 +328,7 @@ namespace bndr {
 					posIndex++;
 				}
 				// we are loading normal data
-				/*else if (line[0] == 'v' && line[1] == 'n') {
+				else if (line[0] == 'v' && line[1] == 'n') {
 
 					// add the empty vector to put the normals in
 					normals2D.push_back({});
@@ -340,7 +340,7 @@ namespace bndr {
 					}
 					// increment the normalsIndex
 					normalsIndex++;
-				}*/
+				}
 
 				// faces (indices to vertices and normals)
 				else if (line[0] == 'f' && line[1] == ' ') {
@@ -350,41 +350,59 @@ namespace bndr {
 					// therefore we must use the normal index to add the appropriate normals to the vertices vector
 					for (int i = 1; i < splitLine.size(); i++) {
 
-						// split the element even further (i.e. "5/4" becomes {"5", "4"})
-						std::vector<std::string> pair = SplitStr(splitLine[i], '/');
-						int posI = (std::stoi(pair[0]) - 1);
-						int normI = (std::stoi(pair[1]) - 1);
-						// add pair[0] since it is the index to the position
-						indices.push_back((uint)(std::stoi(pair[0]) - 1));
-						// however do not add pair[1] to indices but instead use it to add the normals
-						// to the appropriate position vector in vertices2D
-						/*vertices2D[posI].push_back(normals2D[normI][0]);
-						vertices2D[posI].push_back(normals2D[normI][1]);
-						vertices2D[posI].push_back(normals2D[normI][2]);*/
+						std::pair<std::vector<float>, uint> vertexDataBlock;
+						std::string key = splitLine[i];
+						// check if the vertex data block does not exist
+						if (vertexDataBlocks.find(key) == vertexDataBlocks.end()) {
 
+
+							// split the element even further (i.e. "5/4" becomes {"5", "4"})
+							std::vector<std::string> pair = SplitStr(key, '/');
+							int posI = (std::stoi(pair[0]) - 1);
+							int normI = (std::stoi(pair[1]) - 1);
+							currentDataBlockIndex++;
+							vertexDataBlock = { { vertices2D[posI][0], vertices2D[posI][1],
+							vertices2D[posI][2], vertices2D[posI][3], vertices2D[posI][4], vertices2D[posI][5],
+							vertices2D[posI][6], normals2D[normI][0], normals2D[normI][1], normals2D[normI][2] },
+								currentDataBlockIndex };
+							// add each value in the vertex data block to the final vertices list
+							// if it is not already in the map
+							for (float& value : vertexDataBlock.first) {
+
+								verticesFinal.push_back(value);
+							}
+							// save the block of data to the map
+							vertexDataBlocks.insert({ key, vertexDataBlock });
+						}
+						else {
+
+							vertexDataBlock = vertexDataBlocks[key];
+						}
+
+						// add the data block index to the indices
+						indices.push_back(vertexDataBlock.second);
 					}
 				}
 			}
 			// close the object file stream
 			objStream.close();
-			// now let's flatten vertices2D into vertices
-			std::vector<float> vertices;
-			for (const std::vector<float>& vec : vertices2D) {
+			/*for (int i = 0; i < verticesFinal.size(); i += 9) {
 
-				std::cout << vec << "\n";
-				for (const float& fl : vec) {
-
-					vertices.push_back(fl);
-				}
+				std::vector<float>& ref = verticesFinal;
+				std::cout << ref[i] << " " << ref[i + 1] << " " << ref[i + 2] << " " << ref[i + 3] << " "
+					<< ref[i + 4] << " " << ref[i + 5] << " " << ref[i + 6] << " " << ref[i + 7] << " "
+					<< ref[i + 8] << "\n";
 			}
 			std::cout << "\n\n\n";
-			for (int i = 0; i < indices.size()-3; i += 3) {
+
+			for (int i = 0; i < indices.size(); i += 3) {
 
 				std::cout << indices[i] << " " << indices[i + 1] << " " << indices[i + 2] << "\n";
-			}
+			}*/
+
 
 			// return the pair
-			return {vertices, indices};
+			return {verticesFinal, indices};
 
 		}
 		void Update(float deltaTime);
@@ -416,7 +434,7 @@ namespace bndr {
 		static float ySign;
 		static float zSign;
 
-		float speed = 2.0f;
+		float speed = 7.5f;
 
 		// mouse pos change vector
 		glm::vec2 mouseChange = glm::vec2(0.0f, 0.0f);
